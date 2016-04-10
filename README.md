@@ -1,0 +1,1 @@
+# lenovo-sa120-fanspeed-utility
