@@ -27,7 +27,7 @@ s = out.split()
 
 for i in range(0, 6):
   print("Setting fan {} to {}".format(i, fan))
-  idx = 92 + 4 * i
+  idx = 88 + 4 * i
   s[idx+0] = "80"
   s[idx+1] = "00"
   s[idx+2] = "00"
