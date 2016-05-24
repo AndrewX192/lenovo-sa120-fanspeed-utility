@@ -11,7 +11,7 @@ def print_speeds(device):
     print("Fan {} speed: {}".format(i, check_output(['sg_ses', '--index=coo,{}'.format(i), '--get=1:2:11', device]).decode('utf-8').split('\n')[0]))
 
 if len(sys.argv) < 2:
-  print("python fanspeed.py /dev/sgX 1-7")
+  print("python fancontrol.py /dev/sgX 1-7")
   sys.exit(-1)
 
 device = sys.argv[1]
