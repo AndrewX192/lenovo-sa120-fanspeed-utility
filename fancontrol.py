@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import sys
 import time
+import glob
+
 try:
     from StringIO import StringIO
 except ImportError:
@@ -11,15 +13,35 @@ def print_speeds(device):
   for i in range(0, 6):
     print("Fan {} speed: {}".format(i, check_output(['sg_ses', '--index=coo,{}'.format(i), '--get=1:2:11', device]).decode('utf-8').split('\n')[0]))
 
-if len(sys.argv) < 2:
-  print("python fancontrol.py /dev/sgX 1-7")
+if len(sys.argv) < 1:
+  print("python fancontrol.py 1-7")
   sys.exit(-1)
 
-device = sys.argv[1]
-fan = int(sys.argv[2])
+fan = int(sys.argv[1])
 
 if fan <= 0 or fan > 6:
   raise Exception("Fan speed must be between 1 and 7")
+
+
+devices_to_check = ['/dev/sg*','/dev/ses*']
+
+device = ""
+
+for chk_device in devices_to_check:
+  for dev_node in glob.glob(chk_device):
+    try:
+      out = check_output(["sg_ses", dev_node], stderr=STDOUT)
+      if 'ThinkServerSA120' in out:
+        device = dev_node
+        break
+    except:
+      print("Enclosure not found on " + dev_node)
+
+if device == "":
+  print("Could not find enclosure")
+  sys.exit(1)
+
+print("Enclosure found on " + device);
 
 print_speeds(device)
 print("Reading current configuration...")

@@ -18,20 +18,14 @@ FreeNAS 9.10 includes `sg_ses` as part of the standard image.
 
 ## Usage
 
-Find the SCSI Enclosure Services device corresponding to your SA120. On Linux, this is likely one of the `/dev/sg*` devices. (Try `lsscsi`?) On FreeBSD, this is likely `/dev/ses*` instead.
+This fork looks up the ThinkServer Enclosure automatically.  Works when the devices are either `/dev/sg*` or `/dev/ses*`
 
-You can use `sg_ses` to identify SES devices, e.g.:
+Use `fancontrol.py` to set the fan speed:
 
-    # sg_ses /dev/ses0
-      LSI CORP  SAS2X28           0717
-    …
-    # sg_ses /dev/ses1
-      LENOVO    ThinkServerSA120  1007
-    …
-
-Once you've found your SA120, use `fancontrol.py` to set the fan speed:
-
-    # python fancontrol.py /dev/sg0 2
+    # python fancontrol.py 2
+    Enclosure not found on /dev/sg8
+    Enclosure not found on /dev/sg7
+    Enclosure found on /dev/sg6
     Fan 0 speed: 0
     Fan 1 speed: 947
     Fan 2 speed: 932
@@ -54,4 +48,3 @@ Once you've found your SA120, use `fancontrol.py` to set the fan speed:
     Fan 3 speed: 812
     Fan 4 speed: 926
     Fan 5 speed: 945
-
