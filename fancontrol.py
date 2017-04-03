@@ -11,7 +11,7 @@ from subprocess import check_output, Popen, PIPE, STDOUT
 
 def print_speeds(device):
   for i in range(0, 6):
-    print("Fan {} speed: {}".format(i, check_output(['sg_ses', '--index=coo,{}'.format(i), '--get=1:2:11', device]).decode('utf-8').split('\n')[0]))
+    print("Fan {} speed: {}".format(i, check_output(['sg_ses', '--maxlen=32768', '--index=coo,{}'.format(i), '--get=1:2:11', device]).decode('utf-8').split('\n')[0]))
 
 if len(sys.argv) < 1:
   print("python fancontrol.py 1-7")
@@ -30,14 +30,14 @@ device = ""
 for chk_device in devices_to_check:
   for dev_node in glob.glob(chk_device):
     try:
-      out = check_output(["sg_ses", dev_node], stderr=STDOUT)
+      out = check_output(["sg_ses", '--maxlen=32768', dev_node], stderr=STDOUT)
       if 'ThinkServerSA120' in out:
         device = dev_node
 	print("Enclosure found on " + device);
 
 	print_speeds(device)
 	print("Reading current configuration...")
-	out = check_output(["sg_ses", "-p", "0x2", device, "--raw"]).decode('utf-8')
+	out = check_output(["sg_ses", '--maxlen=32768', "-p", "0x2", device, "--raw"]).decode('utf-8')
 	s = out.split()
 
 	for i in range(0, 6):
@@ -68,7 +68,7 @@ for chk_device in devices_to_check:
 	    break
 
 	output.write("\n")
-	p = Popen(['sg_ses', '-p', '0x2', device, '--control', '--data', '-'], stdout=PIPE, stdin=PIPE, stderr=PIPE)
+	p = Popen(['sg_ses', '--maxlen=32768', '-p', '0x2', device, '--control', '--data', '-'], stdout=PIPE, stdin=PIPE, stderr=PIPE)
 	print("Set fan speeds... Waiting to get fan speeds (ctrl+c to skip)")
 	print(p.communicate(input=bytearray(output.getvalue(), 'utf-8'))[0].decode('utf-8'))
 	time.sleep(10)
