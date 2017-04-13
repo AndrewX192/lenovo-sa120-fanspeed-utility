@@ -29,8 +29,8 @@ devices_to_check = ['/dev/sg*', '/dev/ses*']
 
 device = ""
 
-for chk_device in devices_to_check:
-    for dev_node in glob.glob(chk_device):
+for device_glob in devices_to_check:
+    for dev_node in glob.glob(device_glob):
         try:
             out = check_output(["sg_ses", dev_node], stderr=STDOUT)
             if 'ThinkServerSA120' in out:
