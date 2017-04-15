@@ -33,7 +33,8 @@ def get_requested_fan_speed():
 def print_speeds(device):
     for i in range(0, 6):
         print('Fan {} speed: {}'.format(i, check_output(
-            ['sg_ses', '--index=coo,{}'.format(i), '--get=1:2:11', device]).decode('utf-8').split('\n')[0]))
+            ['sg_ses', '--maxlen=32768', '--index=coo,{}'.format(i), '--get=1:2:11', device])
+                                        .decode('utf-8').split('\n')[0]))
 
 
 def find_sa120_devices():
@@ -51,7 +52,7 @@ def find_sa120_devices():
                 continue
             seen_devices.add(device_id)
             try:
-                output = check_output(['sg_ses', device], stderr=STDOUT)
+                output = check_output(['sg_ses', '--maxlen=32768', device], stderr=STDOUT)
                 if b'ThinkServerSA120' in output:
                     print('Enclosure found on ' + device)
                     devices.append(device)
@@ -69,7 +70,7 @@ def format_device_id(stats):
 def set_fan_speeds(device, speed):
     print_speeds(device)
     print('Reading current configuration...')
-    out = check_output(['sg_ses', '-p', '0x2', device, '--raw'])
+    out = check_output(['sg_ses', '--maxlen=32768', '-p', '0x2', device, '--raw'])
 
     s = out.split()
 
@@ -100,8 +101,8 @@ def set_fan_speeds(device, speed):
             break
 
     output.write(b'\n')
-    p = Popen(['sg_ses', '-p', '0x2', device, '--control', '--data', '-'], stdout=PIPE, stdin=PIPE,
-              stderr=PIPE)
+    p = Popen(['sg_ses', '--maxlen=32768', '-p', '0x2', device, '--control', '--data', '-'],
+              stdout=PIPE, stdin=PIPE, stderr=PIPE)
     print(p.communicate(input=output.getvalue())[0].decode('utf-8'))
     print('Set fan speeds... Waiting to get fan speeds (ctrl+c to skip)')
     try:
