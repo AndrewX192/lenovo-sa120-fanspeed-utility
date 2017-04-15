@@ -102,8 +102,8 @@ def set_fan_speeds(device, speed):
     output.write(b'\n')
     p = Popen(['sg_ses', '-p', '0x2', device, '--control', '--data', '-'], stdout=PIPE, stdin=PIPE,
               stderr=PIPE)
-    print('Set fan speeds... Waiting to get fan speeds (ctrl+c to skip)')
     print(p.communicate(input=output.getvalue())[0].decode('utf-8'))
+    print('Set fan speeds... Waiting to get fan speeds (ctrl+c to skip)')
     try:
         time.sleep(10)
         print_speeds(device)
