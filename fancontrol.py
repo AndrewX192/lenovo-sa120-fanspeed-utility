@@ -7,11 +7,7 @@ import time
 import glob
 import stat
 
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
-
+from io import BytesIO
 from subprocess import check_output, Popen, PIPE, STDOUT, CalledProcessError
 
 devices_to_check = ['/dev/sg*', '/dev/ses*', '/dev/bsg/*']
@@ -73,19 +69,19 @@ def format_device_id(stats):
 def set_fan_speeds(device, speed):
     print_speeds(device)
     print('Reading current configuration...')
-    out = check_output(['sg_ses', '-p', '0x2', device, '--raw']).decode('utf-8')
+    out = check_output(['sg_ses', '-p', '0x2', device, '--raw'])
 
     s = out.split()
 
     for i in range(0, 6):
         print('Setting fan {} to {}'.format(i, speed))
         idx = 88 + 4 * i
-        s[idx + 0] = '80'
-        s[idx + 1] = '00'
-        s[idx + 2] = '00'
-        s[idx + 3] = format(1 << 5 | speed & 7, 'x')
+        s[idx + 0] = b'80'
+        s[idx + 1] = b'00'
+        s[idx + 2] = b'00'
+        s[idx + 3] = u'{:x}'.format(1 << 5 | speed & 7).encode('utf-8')
 
-    output = StringIO()
+    output = BytesIO()
     off = 0
     count = 0
 
@@ -94,20 +90,20 @@ def set_fan_speeds(device, speed):
         off = off + 1
         count = count + 1
         if count == 8:
-            output.write('  ')
+            output.write(b'  ')
         elif count == 16:
-            output.write('\n')
+            output.write(b'\n')
             count = 0
         else:
-            output.write(' ')
+            output.write(b' ')
         if off >= len(s):
             break
 
-    output.write('\n')
+    output.write(b'\n')
     p = Popen(['sg_ses', '-p', '0x2', device, '--control', '--data', '-'], stdout=PIPE, stdin=PIPE,
               stderr=PIPE)
     print('Set fan speeds... Waiting to get fan speeds (ctrl+c to skip)')
-    print(p.communicate(input=bytearray(output.getvalue(), 'utf-8'))[0].decode('utf-8'))
+    print(p.communicate(input=output.getvalue())[0].decode('utf-8'))
     try:
         time.sleep(10)
         print_speeds(device)
