@@ -42,8 +42,18 @@ def print_speeds(device):
 
 def find_sa120_devices():
     devices = []
+    seen_devices = set()
     for device_glob in devices_to_check:
         for device in glob.glob(device_glob):
+            stats = os.stat(device)
+            if not stat.S_ISCHR(stats.st_mode):
+                print('Enclosure not found on ' + device)
+                continue
+            device_id = format_device_id(stats)
+            if device_id in seen_devices:
+                print('Enclosure already seen on ' + device)
+                continue
+            seen_devices.add(device_id)
             try:
                 output = check_output(['sg_ses', device], stderr=STDOUT)
                 if b'ThinkServerSA120' in output:
@@ -54,6 +64,10 @@ def find_sa120_devices():
             except CalledProcessError:
                 print('Enclosure not found on ' + device)
     return devices
+
+
+def format_device_id(stats):
+    return '{},{}'.format(os.major(stats.st_rdev), os.minor(stats.st_rdev))
 
 
 def set_fan_speeds(device, speed):
