@@ -14,7 +14,7 @@ except ImportError:
 
 from subprocess import check_output, Popen, PIPE, STDOUT, CalledProcessError
 
-devices_to_check = ['/dev/sg*', '/dev/ses*']
+devices_to_check = ['/dev/sg*', '/dev/ses*', '/dev/bsg/*']
 
 
 def usage():
