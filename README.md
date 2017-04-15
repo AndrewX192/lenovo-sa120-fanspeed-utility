@@ -22,7 +22,7 @@ FreeNAS 9.10 includes `sg_ses` as part of the standard image.
 
 ## Usage
 
-Finds the ThinkServer Enclosure automatically. Works when the devices are either `/dev/sg*` or `/dev/ses*`
+Finds the ThinkServer Enclosure automatically. Works when the devices are either `/dev/sg*`, `/dev/ses*`, or `/dev/bsg/*`
 
 Use `fancontrol.py` to set the fan speed:
 
