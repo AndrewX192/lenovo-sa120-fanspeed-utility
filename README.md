@@ -26,7 +26,7 @@ Native Solaris should have sg3_utils installed.  If executing `sg_ses` doesn't e
 
 On OmniOS CE, the steps involved were:
 
-* Download the package[the `sg3_utils` package](http://sg.danny.cz/sg/          sg3_utils.html).  Move to somewhere like `/root` and extract.
+* Download [the `sg3_utils` package](http://sg.danny.cz/sg/sg3_utils.html).  Move to somewhere like `/root` and extract.
 * Change into the directory, configure with `./configure --prefix=/root/sg3_utils`. 
 * `make` && `make install`
 * Run the fan script and set the path in the environment `sg_sess_path=/root/sg3_utils/bin/sg_ses python fancontrol.py 2`
