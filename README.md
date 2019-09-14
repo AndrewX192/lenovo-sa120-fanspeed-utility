@@ -20,6 +20,19 @@ FreeBSD systems via `pkg`:
 
 FreeNAS 9.10 includes `sg_ses` as part of the standard image.
 
+Solaris/OmniOS/OpenIndiana/SmartOS based systems:
+
+Native Solaris should have sg3_utils installed.  If executing `sg_ses` doesn't exist, it's necessary to install it from source.  Installing napp-it, for the ZFS GUI, also installed all the requisite development tools.  
+
+On OmniOS CE, the steps involved were:
+
+* Download [the `sg3_utils` package](http://sg.danny.cz/sg/sg3_utils.html).  Move to somewhere like `/root` and extract.
+* Change into the directory, configure with `./configure --prefix=/root/sg3_utils`. 
+* `make` && `make install`
+* Run the fan script and set the path in the environment `sg_sess_path=/root/sg3_utils/bin/sg_ses python fancontrol.py 2`
+
+
+
 ## Usage
 
 Finds the ThinkServer Enclosure automatically. Works when the devices are either `/dev/sg*`, `/dev/ses*`, or `/dev/bsg/*`

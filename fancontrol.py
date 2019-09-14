@@ -6,11 +6,17 @@ import sys
 import time
 import glob
 import stat
+import os.path
 
 from io import BytesIO
 from subprocess import check_output, Popen, PIPE, STDOUT, CalledProcessError
 
-devices_to_check = ['/dev/sg*', '/dev/ses*', '/dev/bsg/*']
+devices_to_check = ['/dev/sg*', '/dev/ses*', '/dev/bsg/*', '/dev/es/ses*']
+
+sg_ses_binary = "sg_ses"
+
+if "sg_ses_path" in os.environ:
+    sg_ses_binary = os.getenv("sg_ses_path")
 
 
 def usage():
@@ -33,7 +39,7 @@ def get_requested_fan_speed():
 def print_speeds(device):
     for i in range(0, 6):
         print('Fan {} speed: {}'.format(i, check_output(
-            ['sg_ses', '--maxlen=32768', '--index=coo,{}'.format(i), '--get=1:2:11', device])
+            [sg_ses_binary, '--maxlen=32768', '--index=coo,{}'.format(i), '--get=1:2:11', device])
                                         .decode('utf-8').split('\n')[0]))
 
 
@@ -42,7 +48,10 @@ def find_sa120_devices():
     seen_devices = set()
     for device_glob in devices_to_check:
         for device in glob.glob(device_glob):
-            stats = os.stat(device)
+            try:
+                stats = os.stat(device)
+            except OSError:
+                continue
             if not stat.S_ISCHR(stats.st_mode):
                 print('Enclosure not found on ' + device)
                 continue
@@ -52,7 +61,7 @@ def find_sa120_devices():
                 continue
             seen_devices.add(device_id)
             try:
-                output = check_output(['sg_ses', '--maxlen=32768', device], stderr=STDOUT)
+                output = check_output([sg_ses_binary, '--maxlen=32768', device], stderr=STDOUT)
                 if b'ThinkServerSA120' in output:
                     print('Enclosure found on ' + device)
                     devices.append(device)
