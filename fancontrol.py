@@ -38,9 +38,9 @@ def get_requested_fan_speed():
 
 def print_speeds(device):
     for i in range(0, 6):
-        print('Fan {} speed: {}'.format(i, check_output(
+        print(('Fan {} speed: {}'.format(i, check_output(
             [sg_ses_binary, '--maxlen=32768', '--index=coo,{}'.format(i), '--get=1:2:11', device])
-                                        .decode('utf-8').split('\n')[0]))
+                                        .decode('utf-8').split('\n')[0])))
 
 
 def find_sa120_devices():
@@ -53,22 +53,22 @@ def find_sa120_devices():
             except OSError:
                 continue
             if not stat.S_ISCHR(stats.st_mode):
-                print('Enclosure not found on ' + device)
+                print(('Enclosure not found on ' + device))
                 continue
             device_id = format_device_id(stats)
             if device_id in seen_devices:
-                print('Enclosure already seen on ' + device)
+                print(('Enclosure already seen on ' + device))
                 continue
             seen_devices.add(device_id)
             try:
                 output = check_output([sg_ses_binary, '--maxlen=32768', device], stderr=STDOUT)
                 if b'ThinkServerSA120' in output:
-                    print('Enclosure found on ' + device)
+                    print(('Enclosure found on ' + device))
                     devices.append(device)
                 else:
-                    print('Enclosure not found on ' + device)
+                    print(('Enclosure not found on ' + device))
             except CalledProcessError:
-                print('Enclosure not found on ' + device)
+                print(('Enclosure not found on ' + device))
     return devices
 
 
@@ -84,12 +84,12 @@ def set_fan_speeds(device, speed):
     s = out.split()
 
     for i in range(0, 6):
-        print('Setting fan {} to {}'.format(i, speed))
+        print(('Setting fan {} to {}'.format(i, speed)))
         idx = 88 + 4 * i
         s[idx + 0] = b'80'
         s[idx + 1] = b'00'
         s[idx + 2] = b'00'
-        s[idx + 3] = u'{:x}'.format(1 << 5 | speed & 7).encode('utf-8')
+        s[idx + 3] = '{:x}'.format(1 << 5 | speed & 7).encode('utf-8')
 
     output = BytesIO()
     off = 0
@@ -112,7 +112,7 @@ def set_fan_speeds(device, speed):
     output.write(b'\n')
     p = Popen(['sg_ses', '--maxlen=32768', '-p', '0x2', device, '--control', '--data', '-'],
               stdout=PIPE, stdin=PIPE, stderr=PIPE)
-    print(p.communicate(input=output.getvalue())[0].decode('utf-8'))
+    print((p.communicate(input=output.getvalue())[0].decode('utf-8')))
     print('Set fan speeds... Waiting to get fan speeds (ctrl+c to skip)')
     try:
         time.sleep(10)
