@@ -1,41 +1,24 @@
-# lenovo-sa120-fanspeed-utility
+# LenovoSA120-Fanspeed
 
-This is currently in prototype status.
+LenovoSA120-Fanspeed but with Python 3
 
 ## Requirements
 
-Requires Python and the `sg_ses` utility, provided by [the `sg3_utils` package](http://sg.danny.cz/sg/sg3_utils.html).
+Requires Python 3 and the `sg_ses` utility, provided by [the `sg3_utils` package](http://sg.danny.cz/sg/sg3_utils.html)
 
-Debian-based systems might use:
+Most Linux/BSD/Solaris systems support the sg3_utils package. This conversion to Python 3 has only been tested on Debian Buster. In theory it may be possible to use it on Solaris, OmniOS, OpenIndiana SmartOS, and OmniOS.
 
-    # apt-get install sg3-utils
+Debian-based systems:
 
-On RHEL/CentOS systems:
-
-    # yum install sg3_utils
-
-FreeBSD systems via `pkg`:
-
-    # pkg install sysutils/sg3_utils
-
-FreeNAS 9.10 includes `sg_ses` as part of the standard image.
-
-Solaris/OmniOS/OpenIndiana/SmartOS based systems:
-
-Native Solaris should have sg3_utils installed.  If executing `sg_ses` doesn't exist, it's necessary to install it from source.  Installing napp-it, for the ZFS GUI, also installed all the requisite development tools.  
-
-On OmniOS CE, the steps involved were:
-
-* Download [the `sg3_utils` package](http://sg.danny.cz/sg/sg3_utils.html).  Move to somewhere like `/root` and extract.
-* Change into the directory, configure with `./configure --prefix=/root/sg3_utils`. 
-* `make` && `make install`
-* Run the fan script and set the path in the environment `sg_sess_path=/root/sg3_utils/bin/sg_ses python fancontrol.py 2`
+    # apt install sg3-utils
 
 
+FlynnLivesForks/LenovoSA120-Fanspeed
+## Usage/configuration
 
-## Usage
+Since most *nix based systems will place the device under `/dev/sg*`, `/dev/ses*`, or `/dev/bsg/*` the script should find the ThinkServer Enclosure automatically. 
 
-Finds the ThinkServer Enclosure automatically. Works when the devices are either `/dev/sg*`, `/dev/ses*`, or `/dev/bsg/*`
+You may need to use the `root` user or `sudo` to make this script work properly
 
 Use `fancontrol.py` to set the fan speed:
 
@@ -66,3 +49,7 @@ Use `fancontrol.py` to set the fan speed:
     Fan 3 speed: 449
     Fan 4 speed: 583
     Fan 5 speed: 607
+## Acknowledgements
+
+ - Original Developer [AndrewX192](https://awesomeopensource.com/project/elangosundar/awesome-README-templates)
+ - Original Project Forked From [lenovo-sa120-fanspeed-utility](https://github.com/AndrewX192/lenovo-sa120-fanspeed-utility)
