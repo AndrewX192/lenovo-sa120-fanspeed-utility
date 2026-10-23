@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.0 (unreleased)
+## 0.2.0 (2026-10-22)
 
 First versioned release of the modernized script. The original prototype-era
 script is tagged `v0.1.0`.
