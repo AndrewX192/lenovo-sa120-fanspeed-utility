@@ -1,0 +1,14 @@
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+# The supported floor is Python 3.6 (CentOS 7's python3); py37 is the oldest
+# target ruff offers and keeps it from suggesting newer syntax.
+target-version = "py37"
+
+[tool.ruff.lint]
+extend-select = ["E501"]
+# UP022 suggests capture_output, which is Python 3.7+; we support 3.6.
+ignore = ["UP022"]
