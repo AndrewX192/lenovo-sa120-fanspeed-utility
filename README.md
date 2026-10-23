@@ -6,8 +6,12 @@ quietest); `7` is the fastest.
 
 ## Requirements
 
-- Python 3.6 or later
+- Python 3.6 or later (CI tests 3.9–3.13)
 - The `sg_ses` utility from [the `sg3_utils` package](http://sg.danny.cz/sg/sg3_utils.html)
+
+Older `sg_ses` builds (sg3_utils before 1.38, e.g. CentOS 7) are detected
+automatically and work fine; the script simply omits the `--maxlen` response
+cap on those systems.
 
 Debian-based systems:
 
@@ -71,7 +75,8 @@ To check fan speeds without changing anything:
 
     # python3 fancontrol.py --status
 
-To skip auto-discovery and target a specific enclosure:
+To skip auto-discovery and target a specific enclosure (the device is still
+verified to be an SA120 before anything is written to it):
 
     # python3 fancontrol.py --device /dev/sg6 2
 

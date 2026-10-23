@@ -6,6 +6,7 @@ speed, from 1 (slowest/quietest) to 7 (fastest).
 """
 
 import argparse
+import functools
 import glob
 import os
 import stat
@@ -27,8 +28,25 @@ FAN_COUNT = 6
 FAN_ELEMENT_OFFSET = 88
 
 
+@functools.lru_cache(maxsize=None)
+def sg_ses_supports_maxlen(sg_ses):
+    """Check whether this sg_ses binary accepts --maxlen.
+
+    FreeBSD terminates SES requests whose response buffer exceeds 65535
+    bytes, so we cap the response length where we can. But sg_ses only
+    gained --maxlen in sg3_utils 1.38 (2014); older builds such as the
+    one on CentOS 7 reject the whole command when given the option.
+    """
+    result = subprocess.run([sg_ses, '--maxlen=32768', '--version'], check=False,
+                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return result.returncode == 0
+
+
 def sg_ses_command(sg_ses, args):
-    return [sg_ses, '--maxlen=32768'] + args
+    command = [sg_ses]
+    if sg_ses_supports_maxlen(sg_ses):
+        command.append('--maxlen=32768')
+    return command + args
 
 
 def read_fan_speed(sg_ses, device, fan):
@@ -40,6 +58,15 @@ def read_fan_speed(sg_ses, device, fan):
 def print_fan_speeds(sg_ses, device):
     for fan in range(FAN_COUNT):
         print(f'Fan {fan} speed: {read_fan_speed(sg_ses, device, fan)}')
+
+
+def is_sa120(sg_ses, device):
+    try:
+        output = subprocess.check_output(
+            sg_ses_command(sg_ses, [device]), stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError:
+        return False
+    return b'ThinkServerSA120' in output
 
 
 def find_enclosures(sg_ses):
@@ -59,17 +86,35 @@ def find_enclosures(sg_ses):
                 print('Enclosure already seen on ' + device)
                 continue
             seen_devices.add(device_id)
-            try:
-                output = subprocess.check_output(
-                    sg_ses_command(sg_ses, [device]), stderr=subprocess.STDOUT)
-            except subprocess.CalledProcessError:
-                print('Enclosure not found on ' + device)
-                continue
-            if b'ThinkServerSA120' in output:
+            if is_sa120(sg_ses, device):
                 print('Enclosure found on ' + device)
                 devices.append(device)
             else:
                 print('Enclosure not found on ' + device)
+    return devices
+
+
+def select_devices(sg_ses, requested):
+    """Validate devices named with --device: drop nodes that alias an
+    already-selected device, and refuse anything that does not identify as
+    an SA120 — the control page we write uses SA120-specific byte offsets
+    and could misconfigure other SES hardware.
+    """
+    devices = []
+    seen_devices = set()
+    for device in requested:
+        try:
+            stats = os.stat(device)
+        except OSError as error:
+            raise ValueError(f'cannot access {device}: {error.strerror}') from error
+        device_id = (os.major(stats.st_rdev), os.minor(stats.st_rdev))
+        if device_id in seen_devices:
+            print('Enclosure already seen on ' + device)
+            continue
+        seen_devices.add(device_id)
+        if not is_sa120(sg_ses, device):
+            raise ValueError(f'{device} does not identify as a ThinkServer SA120')
+        devices.append(device)
     return devices
 
 
@@ -82,6 +127,11 @@ def build_control_page(raw, speed):
     is what ``sg_ses --control --data -`` expects back.
     """
     tokens = raw.split()
+    needed = FAN_ELEMENT_OFFSET + 4 * FAN_COUNT
+    if len(tokens) < needed:
+        raise ValueError(
+            f'enclosure control page too short: {len(tokens)} bytes, '
+            f'need at least {needed}')
     for fan in range(FAN_COUNT):
         idx = FAN_ELEMENT_OFFSET + 4 * fan
         tokens[idx] = b'80'  # SELECT bit: apply this control descriptor
@@ -106,10 +156,10 @@ def set_fan_speeds(sg_ses, device, speed):
         sg_ses_command(sg_ses, ['-p', '0x2', device, '--raw']))
     print(f'Setting fans 0-{FAN_COUNT - 1} to {speed}')
     page = build_control_page(raw, speed)
-    process = subprocess.Popen(
+    result = subprocess.run(
         sg_ses_command(sg_ses, ['-p', '0x2', device, '--control', '--data', '-']),
-        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    print(process.communicate(input=page)[0].decode('utf-8'))
+        input=page, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+    print(result.stdout.decode('utf-8'))
     print('Set fan speeds... Waiting to get fan speeds (ctrl+c to skip)')
     try:
         time.sleep(10)
@@ -145,15 +195,32 @@ def parse_args(argv):
 
 def main(argv=None):
     args = parse_args(argv)
-    devices = args.device or find_enclosures(args.sg_ses)
-    if not devices:
-        print('Could not find enclosure')
-        return 1
-    for device in devices:
-        if args.status:
-            print_fan_speeds(args.sg_ses, device)
+    try:
+        if args.device:
+            devices = select_devices(args.sg_ses, args.device)
         else:
-            set_fan_speeds(args.sg_ses, device, args.speed)
+            devices = find_enclosures(args.sg_ses)
+        if not devices:
+            print('Could not find enclosure')
+            return 1
+        for device in devices:
+            if args.status:
+                print_fan_speeds(args.sg_ses, device)
+            else:
+                set_fan_speeds(args.sg_ses, device, args.speed)
+    except FileNotFoundError:
+        print(f"error: could not run sg_ses binary '{args.sg_ses}'", file=sys.stderr)
+        return 1
+    except subprocess.CalledProcessError as error:
+        stderr = (error.stderr or b'').decode('utf-8').strip()
+        if stderr:
+            print(stderr, file=sys.stderr)
+        print(f'error: {" ".join(error.cmd)} failed with exit status {error.returncode}',
+              file=sys.stderr)
+        return 1
+    except ValueError as error:
+        print(f'error: {error}', file=sys.stderr)
+        return 1
     print('\nDone')
     return 0
 
